@@ -120,6 +120,7 @@ local function diff_linenr(hl)
   local fg = Snacks.util.color({ hl, "SnacksGhNormalFloat", "Normal" })
   local bg = Snacks.util.color({ hl, "SnacksGhNormalFloat", "Normal" }, "bg")
   bg = bg or vim.o.background == "dark" and "#1e1e1e" or "#f5f5f5"
+  fg = fg or Snacks.util.color("Normal") or (vim.o.background == "dark" and "#ffffff" or "#000000")
   return {
     fg = fg,
     bg = Snacks.util.blend(fg, bg, 0.1),
