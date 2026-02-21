@@ -152,26 +152,68 @@ function M._open(opts)
   local file = vim.api.nvim_buf_get_name(0) ---@type string?
   file = file and (uv.fs_stat(file) or {}).type == "file" and svim.fs.normalize(file) or nil
   local cwd = file and vim.fn.fnamemodify(file, ":h") or vim.fn.getcwd()
+  local is_jj = vim.fs.root(cwd, ".jj") ~= nil
 
   ---@type snacks.gitbrowse.Fields
   local fields = {
-    branch = opts.branch
-      or system({ "git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD" }, "Failed to get current branch")[1],
-    file = file and system({ "git", "-C", cwd, "ls-files", "--full-name", file }, "Failed to get git file path")[1],
     line_start = opts.line_start,
     line_end = opts.line_end,
     commit = opts.commit,
   }
 
-  if not fields.commit then
-    if opts.what == "permalink" then
-      fields.commit = system(
-        { "git", "-C", cwd, "log", "-n", "1", "--pretty=format:%H", "--", file },
-        "Failed to get latest commit of file"
-      )[1]
+  if is_jj then
+    local root = system({ "jj", "root", "--no-pager" }, "Failed to get jj root")[1]
+    -- Branch: find a bookmark at or ancestral to @
+    if opts.branch then
+      fields.branch = opts.branch
     else
-      local word = vim.fn.expand("<cword>")
-      fields.commit = is_valid_commit_hash(word, cwd) and word or nil
+      local ok, result = pcall(
+        system,
+        { "jj", "log", "--no-pager", "--no-graph", "-r", "latest(ancestors(@) & bookmarks())", "-T", "local_bookmarks", "--limit", "1" },
+        "Failed to get bookmark"
+      )
+      local branch = ok and result[1] or nil
+      -- Take first bookmark if multiple are space-separated
+      branch = branch and vim.trim(branch):match("^(%S+)") or nil
+      fields.branch = branch and branch ~= "" and branch or "main"
+    end
+    -- File: compute relative path from jj root
+    if file then
+      local norm_root = svim.fs.normalize(root)
+      local norm_file = svim.fs.normalize(file)
+      if norm_file:sub(1, #norm_root) == norm_root then
+        fields.file = norm_file:sub(#norm_root + 2)
+      end
+    end
+    -- Commit
+    if not fields.commit then
+      if opts.what == "permalink" then
+        fields.commit = system(
+          { "jj", "log", "--no-pager", "--no-graph", "-r", "@", "-T", "commit_id" },
+          "Failed to get commit id"
+        )[1]
+      else
+        local word = vim.fn.expand("<cword>")
+        if word:match("^[a-z0-9]+$") and #word >= 7 then
+          local ok2 = pcall(system, { "jj", "log", "--no-pager", "--no-graph", "-r", word, "-T", "commit_id" }, "Invalid revision")
+          fields.commit = ok2 and word or nil
+        end
+      end
+    end
+  else
+    fields.branch = opts.branch
+      or system({ "git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD" }, "Failed to get current branch")[1]
+    fields.file = file and system({ "git", "-C", cwd, "ls-files", "--full-name", file }, "Failed to get git file path")[1]
+    if not fields.commit then
+      if opts.what == "permalink" then
+        fields.commit = system(
+          { "git", "-C", cwd, "log", "-n", "1", "--pretty=format:%H", "--", file },
+          "Failed to get latest commit of file"
+        )[1]
+      else
+        local word = vim.fn.expand("<cword>")
+        fields.commit = is_valid_commit_hash(word, cwd) and word or nil
+      end
     end
   end
 
@@ -205,15 +247,30 @@ function M._open(opts)
 
   local remotes = {} ---@type {name:string, url:string}[]
 
-  for _, line in ipairs(system({ "git", "-C", cwd, "remote", "-v" }, "Failed to get git remotes")) do
-    local name, remote = line:match("(%S+)%s+(%S+)%s+%(fetch%)")
-    if name and remote then
-      local repo = M.get_repo(remote, opts)
-      if repo then
-        table.insert(remotes, {
-          name = name,
-          url = M.get_url(repo, fields, opts),
-        })
+  if is_jj then
+    for _, line in ipairs(system({ "jj", "git", "remote", "list", "--no-pager" }, "Failed to get remotes")) do
+      local name, remote = line:match("(%S+)%s+(%S+)")
+      if name and remote then
+        local repo = M.get_repo(remote, opts)
+        if repo then
+          table.insert(remotes, {
+            name = name,
+            url = M.get_url(repo, fields, opts),
+          })
+        end
+      end
+    end
+  else
+    for _, line in ipairs(system({ "git", "-C", cwd, "remote", "-v" }, "Failed to get git remotes")) do
+      local name, remote = line:match("(%S+)%s+(%S+)%s+%(fetch%)")
+      if name and remote then
+        local repo = M.get_repo(remote, opts)
+        if repo then
+          table.insert(remotes, {
+            name = name,
+            url = M.get_url(repo, fields, opts),
+          })
+        end
       end
     end
   end

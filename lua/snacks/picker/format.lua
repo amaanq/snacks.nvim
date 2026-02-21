@@ -231,6 +231,54 @@ function M.git_log(item, picker)
   return ret
 end
 
+function M.jj_log(item, picker)
+  local a = Snacks.picker.util.align
+  local ret = {} ---@type snacks.picker.Highlight[]
+  ret[#ret + 1] = { a(item.change_id or "", 8, { truncate = true }), "SnacksPickerGitCommit" }
+  ret[#ret + 1] = { " " }
+  if item.date then
+    ret[#ret + 1] = { a(item.date, 12), "SnacksPickerGitDate" }
+    ret[#ret + 1] = { " " }
+  end
+  Snacks.picker.highlight.extend(ret, M.commit_message(item, picker))
+  if item.author then
+    ret[#ret + 1] = { " <" .. item.author .. ">", "SnacksPickerGitAuthor" }
+  end
+  if item.bookmarks then
+    ret[#ret + 1] = { " " }
+    ret[#ret + 1] = { item.bookmarks, "SnacksPickerGitBranch" }
+  end
+  return ret
+end
+
+function M.jj_status(item, picker)
+  local ret = {} ---@type snacks.picker.Highlight[]
+  local a = Snacks.picker.util.align
+  local s = item.status or "?"
+  local hls = {
+    ["A"] = "SnacksPickerGitStatusAdded",
+    ["M"] = "SnacksPickerGitStatusModified",
+    ["D"] = "SnacksPickerGitStatusDeleted",
+    ["C"] = "SnacksPickerGitStatusModified",
+    ["?"] = "SnacksPickerGitStatusUntracked",
+  }
+  ret[#ret + 1] = { a(s, 2), hls[s] or "SnacksPickerGitStatus" }
+  ret[#ret + 1] = { " " }
+  vim.list_extend(ret, M.filename(item, picker))
+  return ret
+end
+
+function M.jj_bookmarks(item, picker)
+  local a = Snacks.picker.util.align
+  local ret = {} ---@type snacks.picker.Highlight[]
+  ret[#ret + 1] = { a(item.bookmark or "", 30, { truncate = true }), "SnacksPickerGitBranch" }
+  ret[#ret + 1] = { " " }
+  ret[#ret + 1] = { a(item.change_id or "", 8, { truncate = true }), "SnacksPickerGitCommit" }
+  ret[#ret + 1] = { " " }
+  Snacks.picker.highlight.extend(ret, M.commit_message(item, picker))
+  return ret
+end
+
 function M.git_branch(item, picker)
   local a = Snacks.picker.util.align
   local ret = {} ---@type snacks.picker.Highlight[]
