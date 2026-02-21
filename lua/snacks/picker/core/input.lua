@@ -172,7 +172,7 @@ function M:update()
   vim.api.nvim_buf_set_extmark(self.win.buf, ns, 0, 0, {
     id = 999,
     virt_text = line,
-    virt_text_pos = "right_align",
+    virt_text_pos = "eol_right_align",
   })
 end
 
