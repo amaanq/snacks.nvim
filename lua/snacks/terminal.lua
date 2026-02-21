@@ -96,6 +96,9 @@ function M.open(cmd, opts)
   opts = vim.deepcopy(opts)
   opts.win.wo.winbar = opts.win.wo.winbar
     or (opts.win.position == "float" and "" or (id .. ": %{get(b:, 'term_title', '')}"))
+  if opts.win.position == "float" and not opts.win.title then
+    opts.win.title = " Terminal " .. id .. " "
+  end
 
   if opts.override then
     return opts.override(cmd, opts)
