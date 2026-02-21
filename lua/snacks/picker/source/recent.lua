@@ -1,3 +1,5 @@
+local Async = require("snacks.picker.util.async")
+
 local M = {}
 
 local uv = vim.uv or vim.loop
@@ -10,7 +12,9 @@ local function oldfiles(filter, extra)
   vim.list_extend(files, extra or {})
   vim.list_extend(files, vim.v.oldfiles)
   local i = 0
+  local yield ---@type fun()
   return function()
+    yield = yield or Async.yielder()
     for f = i + 1, #files do
       i = f
       local file = files[f]
@@ -21,6 +25,7 @@ local function oldfiles(filter, extra)
       if want and uv.fs_stat(file) then
         return file
       end
+      yield()
     end
   end
 end
