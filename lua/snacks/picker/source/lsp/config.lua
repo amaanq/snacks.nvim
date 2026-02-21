@@ -213,7 +213,7 @@ function M.preview(ctx)
   local function list(values)
     return table.concat(
       vim.tbl_map(function(v)
-        return "`" .. v .. "`"
+        return "`" .. (type(v) == "table" and table.concat(v, ", ") or v) .. "`"
       end, values),
       ", "
     )
