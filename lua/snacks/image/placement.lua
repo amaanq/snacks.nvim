@@ -320,7 +320,7 @@ function M:render_grid(loc)
       end
       -- conceal remaining lines if any
       local last = extmarks[#extmarks]
-      if last and #img == 0 and (last.row < range[3] - 1) and vim.fn.has("nvim-0.11.4") == 1 then
+      if last and #img == 0 and (last.row < range[3] - 1) then
         extmarks[#extmarks + 1] = {
           row = last.row + 1,
           end_row = range[3] - 1,
