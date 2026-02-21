@@ -15,6 +15,7 @@
 ---@field image snacks.image
 ---@field indent snacks.indent
 ---@field input snacks.input
+---@field jjui snacks.jjui
 ---@field keymap snacks.keymap
 ---@field layout snacks.layout
 ---@field lazygit snacks.lazygit
@@ -47,6 +48,7 @@
 ---@field image? snacks.image.Config|{}
 ---@field indent? snacks.indent.Config|{}
 ---@field input? snacks.input.Config|{}
+---@field jjui? snacks.jjui.Config|{}
 ---@field layout? snacks.layout.Config|{}
 ---@field lazygit? snacks.lazygit.Config|{}
 ---@field notifier? snacks.notifier.Config|{}
