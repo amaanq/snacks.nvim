@@ -266,6 +266,14 @@ function M.diff(opts, ctx)
     table.insert(args, "--cached")
   end
 
+  local pathspec = {} ---@type string[]
+  if opts.current_file then
+    local file = vim.api.nvim_buf_get_name(ctx.filter.current_buf)
+    if file ~= "" then
+      pathspec = { "--", file }
+    end
+  end
+
   local cwd = ctx:git_root()
   ctx.picker:set_cwd(cwd)
 
@@ -274,16 +282,18 @@ function M.diff(opts, ctx)
   finders[#finders + 1] = Diff.diff(
     ctx:opts({
       cmd = "git",
-      args = args,
+      args = vim.list_extend(vim.deepcopy(args), pathspec),
       cwd = cwd,
     }),
     ctx
   )
   if opts.staged == nil and opts.base == nil then
+    local staged_args = vim.list_extend(vim.deepcopy(args), { "--cached" })
+    vim.list_extend(staged_args, pathspec)
     finders[#finders + 1] = Diff.diff(
       ctx:opts({
         cmd = "git",
-        args = vim.list_extend(vim.deepcopy(args), { "--cached" }),
+        args = staged_args,
         cwd = cwd,
       }),
       ctx

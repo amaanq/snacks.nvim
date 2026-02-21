@@ -344,6 +344,35 @@ function M.git_status(ctx)
 end
 
 ---@param ctx snacks.picker.preview.ctx
+---@return string[], boolean terminal
+local function jj(ctx, ...)
+  local terminal = ctx.picker.opts.previewers.diff.style == "terminal"
+  local ret = { "env", "JJ_CONFIG=/dev/null", "jj", "--no-pager" }
+  vim.list_extend(ret, { ... })
+  return ret, terminal
+end
+
+---@param ctx snacks.picker.preview.ctx
+function M.jj_show(ctx)
+  local cmd, terminal = jj(ctx, "show", "--git", "-r", ctx.item.change_id or ctx.item.bookmark or ctx.item.commit)
+  M.cmd(cmd, ctx, { ft = not terminal and "git" or nil })
+end
+
+---@param ctx snacks.picker.preview.ctx
+function M.jj_status(ctx)
+  local s = ctx.item.status
+  if s == "A" or s == "?" then
+    M.file(ctx)
+  else
+    local cmd, terminal = jj(ctx, "diff", "--git")
+    if ctx.item.file then
+      vim.list_extend(cmd, { "--", ctx.item.file })
+    end
+    M.cmd(cmd, ctx, { ft = not terminal and "diff" or nil })
+  end
+end
+
+---@param ctx snacks.picker.preview.ctx
 function M.colorscheme(ctx)
   if not ctx.preview.state.colorscheme then
     ctx.preview.state.colorscheme = vim.g.colors_name or "default"

@@ -459,6 +459,21 @@ function M.git_stash_apply(_, item)
   end, { cwd = item.cwd })
 end
 
+function M.jj_edit(picker, item)
+  picker:close()
+  if item then
+    local change_id = item.change_id or item.bookmark
+    if not change_id then
+      Snacks.notify.warn("No change ID found", { title = "Snacks Picker" })
+      return
+    end
+    Snacks.picker.util.cmd({ "jj", "edit", change_id }, function()
+      Snacks.notify("Editing " .. change_id, { title = "Snacks Picker" })
+      vim.cmd.checktime()
+    end, { cwd = item.cwd })
+  end
+end
+
 function M.git_checkout(picker, item)
   picker:close()
   if item then

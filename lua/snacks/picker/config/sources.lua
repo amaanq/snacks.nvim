@@ -460,6 +460,7 @@ M.git_status = {
 ---@field group? boolean group changes by file (when false, show individual hunks)
 ---@field staged? boolean show staged changes
 ---@field base? string base commit/branch/tag to diff against (default: HEAD)
+---@field current_file? boolean show diff for current file only
 M.git_diff = {
   group = false,
   finder = "git_diff",
@@ -1076,6 +1077,66 @@ M.undo = {
     ignore_whitespace_change_at_eol = true,
     indent_heuristic = true,
   },
+}
+
+---@type snacks.picker.git.diff.Config
+M.git_diff_file = {
+  group = false,
+  finder = "git_diff",
+  format = "git_status",
+  preview = "diff",
+  current_file = true,
+  matcher = { sort_empty = true },
+  sort = { fields = { "score:desc", "file", "idx" } },
+}
+
+---@class snacks.picker.jj.log.Config: snacks.picker.Config
+M.jj_log = {
+  finder = "jj_log",
+  format = "jj_log",
+  preview = "jj_show",
+  confirm = "jj_edit",
+  supports_live = true,
+  sort = { fields = { "score:desc", "idx" } },
+}
+
+---@class snacks.picker.jj.status.Config: snacks.picker.Config
+M.jj_status = {
+  finder = "jj_status",
+  format = "jj_status",
+  preview = "jj_status",
+}
+
+---@class snacks.picker.jj.diff.Config: snacks.picker.Config
+---@field group? boolean group changes by file
+---@field rev? string revision to diff
+---@field from? string from revision
+---@field to? string to revision
+---@field current_file? boolean show diff for current file only
+M.jj_diff = {
+  finder = "jj_diff",
+  format = "git_status",
+  preview = "diff",
+  matcher = { sort_empty = true },
+  sort = { fields = { "score:desc", "file", "idx" } },
+}
+
+---@type snacks.picker.jj.diff.Config
+M.jj_diff_file = {
+  finder = "jj_diff",
+  format = "git_status",
+  preview = "diff",
+  current_file = true,
+  matcher = { sort_empty = true },
+  sort = { fields = { "score:desc", "file", "idx" } },
+}
+
+---@class snacks.picker.jj.bookmarks.Config: snacks.picker.Config
+M.jj_bookmarks = {
+  finder = "jj_bookmarks",
+  format = "jj_bookmarks",
+  preview = "jj_show",
+  confirm = "jj_edit",
 }
 
 -- Open a project from zoxide
