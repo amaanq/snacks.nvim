@@ -82,15 +82,8 @@ M.transforms = {
     local packages = { "xcolor" }
     vim.list_extend(packages, Snacks.image.config.math.latex.packages)
     vim.list_extend(packages, M.get_packages(ctx.buf))
+    packages = vim.list.unique(packages)
     table.sort(packages)
-    local seen = {} ---@type table<string, boolean>
-    packages = vim.tbl_filter(function(p)
-      if seen[p] then
-        return false
-      end
-      seen[p] = true
-      return true
-    end, packages)
     img.content = Snacks.picker.util.tpl(Snacks.image.config.math.latex.tpl, {
       font_size = Snacks.image.config.math.latex.font_size or "large",
       packages = table.concat(packages, ", "),
