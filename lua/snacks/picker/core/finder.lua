@@ -204,6 +204,7 @@ function M.multi(finders)
     ---@async
     ---@type snacks.picker.finder.async
     local function collect(cb)
+      local tasks = {} ---@type snacks.picker.Async[]
       for source_id, find in ipairs(results) do
         if type(find) == "table" then
           for _, item in ipairs(find) do
@@ -211,12 +212,25 @@ function M.multi(finders)
             cb(item)
           end
         else
-          ---@async
-          find(function(item)
-            item.source_id = source_id
-            cb(item)
+          local sid = source_id
+          tasks[#tasks + 1] = Async.new(function()
+            find(function(item)
+              item.source_id = sid
+              cb(item)
+            end)
           end)
         end
+      end
+      local parent = Async.running()
+      if parent then
+        parent:on("abort", function()
+          for _, task in ipairs(tasks) do
+            task:abort()
+          end
+        end)
+      end
+      for _, task in ipairs(tasks) do
+        task:wait()
       end
     end
 
