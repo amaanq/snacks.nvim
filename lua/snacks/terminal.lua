@@ -16,6 +16,8 @@ M.meta = {
 ---@field win? snacks.win.Config|{}
 ---@field shell? string|string[] The shell to use. Defaults to `vim.o.shell`
 ---@field override? fun(cmd?: string|string[], opts?: snacks.terminal.Opts) Use this to use a different terminal implementation
+---@field fixed_id? boolean Terminal IDs only use `cmd` and `count`, ignoring `cwd` and `env`. Terminal N is always terminal N.
+---@field exclusive? boolean Only one float terminal visible at a time. Toggling a float hides other visible floats.
 local defaults = {
   win = { style = "terminal" },
 }
@@ -175,12 +177,16 @@ end
 ---@param opts? snacks.terminal.Opts
 function M.tid(cmd, opts)
   opts = opts or {}
-  return vim.inspect({
+  local cfg = Snacks.config.get("terminal", defaults --[[@as snacks.terminal.Opts]], opts)
+  local key = {
     cmd = type(cmd) == "table" and cmd or { cmd },
-    cwd = opts.cwd or vim.fn.getcwd(0),
-    env = opts.env,
     count = opts.count or vim.v.count1,
-  })
+  }
+  if not cfg.fixed_id then
+    key.cwd = opts.cwd or vim.fn.getcwd(0)
+    key.env = opts.env
+  end
+  return vim.inspect(key)
 end
 
 --- Get or create a terminal window.
@@ -211,12 +217,29 @@ function M.list()
   end, terminals)
 end
 
+---@private
+---@param target snacks.win
+function M._hide_other_floats(target)
+  for _, term in pairs(M.list()) do
+    if term ~= target and term:valid() and term.opts.position == "float" then
+      term:hide()
+    end
+  end
+end
+
 --- Toggle a terminal window.
 --- The terminal id is based on the `cmd`, `cwd`, `env` and `vim.v.count1` options.
 ---@param cmd? string | string[]
 ---@param opts? snacks.terminal.Opts
 function M.toggle(cmd, opts)
+  local cfg = Snacks.config.get("terminal", defaults --[[@as snacks.terminal.Opts]], opts)
   local terminal, created = M.get(cmd, opts)
+  if cfg.exclusive then
+    local showing = created or not assert(terminal):valid()
+    if showing then
+      M._hide_other_floats(terminal)
+    end
+  end
   return created and terminal or assert(terminal):toggle()
 end
 
