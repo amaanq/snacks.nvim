@@ -20,7 +20,7 @@ function M.severity(item, picker)
       {
         col = 0,
         virt_text = { { picker.opts.icons.diagnostics[cap], "Diagnostic" .. cap } },
-        virt_text_pos = "right_align",
+        virt_text_pos = "eol_right_align",
         hl_mode = "combine",
       },
     }
@@ -625,7 +625,7 @@ function M.file_git_status(item, picker)
   ret[#ret + 1] = {
     col = 0,
     virt_text = { { icon, hl }, { " " } },
-    virt_text_pos = "right_align",
+    virt_text_pos = "eol_right_align",
     hl_mode = "combine",
   }
   return ret

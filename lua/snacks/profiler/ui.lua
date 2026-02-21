@@ -212,7 +212,7 @@ function M.highlight(buf, opts)
       hl_mode = "combine",
       virt_text = text,
       virt_text_win_col = type(align) == "number" and align or nil,
-      virt_text_pos = align == "right" and "right_align" or align == "left" and "eol" or nil,
+      virt_text_pos = align == "right" and "eol_right_align" or align == "left" and "eol" or nil,
       line_hl_group = ("SnacksProfilerHot%02d"):format(
         math.max(math.min(math.floor(entry.time / mmax * M.shades), M.shades), 1)
       ),
